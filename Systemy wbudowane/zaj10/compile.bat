@@ -1,0 +1,1 @@
+asemw zadanie1.asm > Log.txt

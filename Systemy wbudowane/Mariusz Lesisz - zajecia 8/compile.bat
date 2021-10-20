@@ -1,0 +1,1 @@
+asemw NaOcene.asm > Log.txt

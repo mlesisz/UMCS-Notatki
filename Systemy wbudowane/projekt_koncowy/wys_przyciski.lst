@@ -1,0 +1,446 @@
+
+ASEM-51 V1.3                                         Copyright (c) 2002 by W.W. Heinz                                         PAGE 1
+
+
+
+
+
+       MCS-51 Family Macro Assembler   A S E M - 5 1   V 1.3
+       =====================================================
+
+
+
+	Source File:	wys_przyciski.asm
+	Object File:	wys_przyciski.hex
+	List File:	wys_przyciski.lst
+
+
+
+ Line  I  Addr  Code            Source
+
+    1:		N	 80	_LCDWC	DATA 	0FF80h
+    2:		N	 81	_LCDWD	DATA	0FF81h
+    3:		N	 82	_LCDRC	DATA	0FF82h
+    4:		N	 83	_LCDRD	DATA	0FF83h
+    5:
+    6:		N	 30	_MENU	DATA	030h
+    7:
+    8:
+    9:		N      0000		ORG 0000h
+   10:	  0000			_RESET:
+   11:	  0000	02 01 00		LJMP _INIT
+   12:
+   13:		N      0100		ORG 0100h
+   14:	  0100			_INIT:
+   15:	  0100	12 01 EB		CALL _LCD_INIT
+   16:	  0103	75 30 08		MOV _MENU,#8	;0 -MSG, 1 -SETTINGS, 2 -TEST ...
+   17:	  0106	12 01 0D		CALL _MENU_WYSWIETLANIE
+   18:
+   19:	  0109			_LOOP:
+   20:	  0109	00			NOP
+   21:	  010A	02 01 09		LJMP	_LOOP
+   22:
+   23:	  010D			_MENU_WYSWIETLANIE:
+   24:	  010D	12 01 E5		CALL _LCD_CZYSC
+   25:	  0110	C3			CLR C
+   26:	  0111	E5 30			MOV A,_MENU
+   27:	  0113	94 00			SUBB A,#0		;0
+   28:	  0115	60 21			JZ _WYSWIETLANIE_MSG
+   29:	  0117	94 01			SUBB A,#1		;1
+   30:	  0119	60 24			JZ _WYSWIETLANIE_SETTINGS
+   31:	  011B	94 01			SUBB A,#1		;2
+   32:	  011D	60 27			JZ _WYSWIETLANIE_TEST
+   33:	  011F	94 01			SUBB A,#1		;3
+   34:	  0121	60 2A			JZ _WYSWIETLANIE_SEND
+   35:	  0123	94 01			SUBB A,#1		;4
+   36:	  0125	60 30			JZ _WYSWIETLANIE_READ
+   37:	  0127	94 01			SUBB A,#1		;5
+   38:	  0129	60 36			JZ _WYSWIETLANIE_UPTIME
+   39:	  012B	94 01			SUBB A,#1		;6
+   40:	  012D	60 3C			JZ _WYSWIETLANIE_EDIT_MSG
+   41:	  012F	94 01			SUBB A,#1		;7
+   42:	  0131	60 42			JZ _WYSWIETLANIE_BUZZER
+   43:	  0133	94 01			SUBB A,#1		;8
+
+ASEM-51 V1.3                                         Copyright (c) 2002 by W.W. Heinz                                         PAGE 2
+
+
+
+ Line  I  Addr  Code            Source
+
+   44:	  0135	60 48			JZ _WYSWIETLANIE_LED
+   45:	  0137	22			RET
+   46:
+   47:	  0138			_WYSWIETLANIE_MSG:
+   48:	  0138	12 01 C8		CALL _NAPISZ_MAIN_MENU
+   49:	  013B	12 01 89		CALL _NAPISZ_MSG
+   50:	  013E	22			RET
+   51:
+   52:	  013F			_WYSWIETLANIE_SETTINGS:
+   53:	  013F	12 01 C8		CALL _NAPISZ_MAIN_MENU
+   54:	  0142	12 01 90		CALL _NAPISZ_SETTINGS
+   55:	  0145	22			RET
+   56:
+   57:	  0146			_WYSWIETLANIE_TEST:
+   58:	  0146	12 01 C8		CALL _NAPISZ_MAIN_MENU
+   59:	  0149	12 01 97		CALL _NAPISZ_TEST
+   60:	  014C	22			RET
+   61:
+   62:	  014D			_WYSWIETLANIE_SEND:
+   63:	  014D	12 01 89		CALL _NAPISZ_MSG
+   64:	  0150	12 01 D2		CALL _NAPISZ_ZNAK
+   65:	  0153	12 01 9E		CALL _NAPISZ_SEND
+   66:	  0156	22			RET
+   67:
+   68:	  0157			_WYSWIETLANIE_READ:
+   69:	  0157	12 01 89		CALL _NAPISZ_MSG
+   70:	  015A	12 01 D2		CALL _NAPISZ_ZNAK
+   71:	  015D	12 01 A5		CALL _NAPISZ_READ
+   72:	  0160	22			RET
+   73:
+   74:	  0161			_WYSWIETLANIE_UPTIME:
+   75:	  0161	12 01 90		CALL _NAPISZ_SETTINGS
+   76:	  0164	12 01 D2		CALL _NAPISZ_ZNAK
+   77:	  0167	12 01 AC		CALL _NAPISZ_UPTIME
+   78:	  016A	22			RET
+   79:
+   80:	  016B			_WYSWIETLANIE_EDIT_MSG:
+   81:	  016B	12 01 90		CALL _NAPISZ_SETTINGS
+   82:	  016E	12 01 D2		CALL _NAPISZ_ZNAK
+   83:	  0171	12 01 B3		CALL _NAPISZ_EDIT_MSG
+   84:	  0174	22			RET
+   85:
+   86:	  0175			_WYSWIETLANIE_BUZZER:
+   87:	  0175	12 01 97		CALL _NAPISZ_TEST
+   88:	  0178	12 01 D2		CALL _NAPISZ_ZNAK
+   89:	  017B	12 01 BA		CALL _NAPISZ_BUZZER
+   90:	  017E	22			RET
+   91:
+   92:	  017F			_WYSWIETLANIE_LED:
+   93:	  017F	12 01 97		CALL _NAPISZ_TEST
+   94:	  0182	12 01 D2		CALL _NAPISZ_ZNAK
+   95:	  0185	12 01 C1		CALL _NAPISZ_LED
+   96:	  0188	22			RET
+   97:
+   98:	  0189			_NAPISZ_MSG:
+   99:	  0189	90 02 26		MOV DPTR,#_MSG_NAPIS
+
+ASEM-51 V1.3                                         Copyright (c) 2002 by W.W. Heinz                                         PAGE 3
+
+
+
+ Line  I  Addr  Code            Source
+
+  100:	  018C	12 01 D9		CALL _NAPISZ_WHILE
+  101:	  018F	22			RET
+  102:
+  103:	  0190			_NAPISZ_SETTINGS:
+  104:	  0190	90 02 2A		MOV DPTR,#_SETTINGS_NAPIS
+  105:	  0193	12 01 D9		CALL _NAPISZ_WHILE
+  106:	  0196	22			RET
+  107:
+  108:	  0197			_NAPISZ_TEST:
+  109:	  0197	90 02 33		MOV DPTR,#_TEST_NAPIS
+  110:	  019A	12 01 D9		CALL _NAPISZ_WHILE
+  111:	  019D	22			RET
+  112:
+  113:	  019E			_NAPISZ_SEND:
+  114:	  019E	90 02 38		MOV DPTR,#_SEND_NAPIS
+  115:	  01A1	12 01 D9		CALL _NAPISZ_WHILE
+  116:	  01A4	22			RET
+  117:
+  118:	  01A5			_NAPISZ_READ:
+  119:	  01A5	90 02 3D		MOV DPTR,#_READ_NAPIS
+  120:	  01A8	12 01 D9		CALL _NAPISZ_WHILE
+  121:	  01AB	22			RET
+  122:
+  123:	  01AC			_NAPISZ_UPTIME:
+  124:	  01AC	90 02 42		MOV DPTR,#_UPTIME_NAPIS
+  125:	  01AF	12 01 D9		CALL _NAPISZ_WHILE
+  126:	  01B2	22			RET
+  127:
+  128:	  01B3			_NAPISZ_EDIT_MSG:
+  129:	  01B3	90 02 49		MOV DPTR,#_EDIT_MSG_NAPIS
+  130:	  01B6	12 01 D9		CALL _NAPISZ_WHILE
+  131:	  01B9	22			RET
+  132:
+  133:	  01BA			_NAPISZ_BUZZER:
+  134:	  01BA	90 02 52		MOV DPTR,#_BUZZER_NAPIS
+  135:	  01BD	12 01 D9		CALL _NAPISZ_WHILE
+  136:	  01C0	22			RET
+  137:
+  138:	  01C1			_NAPISZ_LED:
+  139:	  01C1	90 02 59		MOV DPTR,#_LED_NAPIS
+  140:	  01C4	12 01 D9		CALL _NAPISZ_WHILE
+  141:	  01C7	22			RET
+  142:
+  143:	  01C8			_NAPISZ_MAIN_MENU:
+  144:	  01C8	90 02 1C		MOV DPTR,#_MAIN_MENU_NAPIS
+  145:	  01CB	12 01 D9		CALL _NAPISZ_WHILE
+  146:	  01CE	12 01 D2		CALL _NAPISZ_ZNAK
+  147:					;skok do 2 linii
+  148:					;MOV R7,#27h
+  149:					;CALL _LCD_CMD_FROM_R7
+  150:	  01D1	22			RET
+  151:
+  152:	  01D2			_NAPISZ_ZNAK:
+  153:	  01D2	90 02 1A		MOV DPTR,#_ZNAK_NAPIS
+  154:	  01D5	12 01 D9		CALL _NAPISZ_WHILE
+  155:	  01D8	22			RET
+
+ASEM-51 V1.3                                         Copyright (c) 2002 by W.W. Heinz                                         PAGE 4
+
+
+
+ Line  I  Addr  Code            Source
+
+  156:
+  157:	  01D9			_NAPISZ_WHILE:
+  158:	  01D9	E4			CLR A
+  159:	  01DA	93			MOVC A,@A+DPTR
+  160:	  01DB	FF			MOV R7,A
+  161:	  01DC	60 06			JZ _NAPISZ_END
+  162:	  01DE	12 02 13		CALL _LCD_DATA_FROM_R7
+  163:	  01E1	A3			INC DPTR
+  164:	  01E2	80 F5			SJMP _NAPISZ_WHILE
+  165:	  01E4			_NAPISZ_END:
+  166:	  01E4	22			RET
+  167:
+  168:	  01E5			_LCD_CZYSC:
+  169:	  01E5	7F 01			MOV R7,#1
+  170:	  01E7	12 02 0C		CALL _LCD_CMD_FROM_R7
+  171:	  01EA	22			RET
+  172:
+  173:	  01EB			_LCD_INIT:
+  174:	  01EB	7F 38			MOV R7,#00111000b
+  175:	  01ED	12 02 0C		CALL _LCD_CMD_FROM_R7
+  176:	  01F0	7F 0F			MOV R7,#00001111b
+  177:	  01F2	12 02 0C		CALL _LCD_CMD_FROM_R7
+  178:	  01F5	7F 06			MOV R7,#00000110b
+  179:	  01F7	12 02 0C		CALL _LCD_CMD_FROM_R7
+  180:	  01FA	7F 14			MOV R7,#00010100b
+  181:	  01FC	12 02 0C		CALL _LCD_CMD_FROM_R7
+  182:	  01FF	7F 01			MOV R7,#00000001b	;Wyczyścisz wyświetlacz.
+  183:	  0201	12 02 0C		CALL _LCD_CMD_FROM_R7
+  184:	  0204	22			RET
+  185:
+  186:	  0205			_LCD_WAIT_WHILE_BUSY:
+  187:	  0205	79 82			MOV R1,#_LCDRC
+  188:	  0207	E3			MOVX A,@R1
+  189:	  0208	20 E7 FA		JB ACC.7, _LCD_WAIT_WHILE_BUSY
+  190:	  020B			_LCD_WAIT_WHILE_BUSY_END:
+  191:	  020B	22			RET
+  192:
+  193:	  020C			_LCD_CMD_FROM_R7:
+  194:	  020C	51 05			CALL _LCD_WAIT_WHILE_BUSY
+  195:	  020E	78 80			MOV R0,#_LCDWC
+  196:	  0210	EF			MOV A,R7
+  197:	  0211	F2			MOVX @R0,A
+  198:	  0212	22			RET
+  199:
+  200:	  0213			_LCD_DATA_FROM_R7:
+  201:	  0213	51 05			CALL _LCD_WAIT_WHILE_BUSY
+  202:	  0215	79 81			MOV R1,#_LCDWD
+  203:	  0217	EF			MOV A, R7
+  204:	  0218	F3			MOVX @R1,A
+  205:	  0219	22			RET
+  206:
+  207:	  021A			_ZNAK_NAPIS:
+  208:	  021A	3E 00			DB	'>',0
+  209:	  021C			_MAIN_MENU_NAPIS:
+  210:	  021C	4D 41 49 4E		DB	'MAIN MENU',0
+	  0220	20 4D 45 4E
+
+ASEM-51 V1.3                                         Copyright (c) 2002 by W.W. Heinz                                         PAGE 5
+
+
+
+ Line  I  Addr  Code            Source
+
+	  0224	55 00
+  211:	  0226			_MSG_NAPIS:
+  212:	  0226	4D 53 47 00		DB	'MSG',0
+  213:	  022A			_SETTINGS_NAPIS:
+  214:	  022A	53 45 54 54		DB	'SETTINGS',0
+	  022E	49 4E 47 53
+	  0232	00
+  215:	  0233			_TEST_NAPIS:
+  216:	  0233	54 45 53 54		DB	'TEST',0
+	  0237	00
+  217:	  0238			_SEND_NAPIS:
+  218:	  0238	53 45 4E 44		DB	'SEND',0
+	  023C	00
+  219:	  023D			_READ_NAPIS:
+  220:	  023D	52 45 41 44		DB	'READ',0
+	  0241	00
+  221:	  0242			_UPTIME_NAPIS:
+  222:	  0242	55 50 54 49		DB	'UPTIME',0
+	  0246	4D 45 00
+  223:	  0249			_EDIT_MSG_NAPIS:
+  224:	  0249	45 44 49 54		DB	'EDIT_MSG',0
+	  024D	5F 4D 53 47
+	  0251	00
+  225:	  0252			_BUZZER_NAPIS:
+  226:	  0252	42 55 5A 5A		DB	'BUZZER',0
+	  0256	45 52 00
+  227:	  0259			_LED_NAPIS:
+  228:	  0259	4C 45 44 00		DB	'LED',0
+  229:
+  230:				END
+
+
+
+
+
+                     register banks used:  ---
+
+                     no errors
+
+
+
+
+ASEM-51 V1.3                                         Copyright (c) 2002 by W.W. Heinz                                         PAGE 6
+
+
+
+
+
+	       L I S T   O F   S Y M B O L S
+	       =============================
+
+
+SYMBOL				  TYPE     VALUE	LINE
+------------------------------------------------------------
+??ASEM_51			  NUMBER    8051
+??VERSION			  NUMBER    0130
+AC				  BIT	      D6
+ACC				  DATA	      E0
+B				  DATA	      F0
+CY				  BIT	      D7
+DPH				  DATA	      83
+DPL				  DATA	      82
+EA				  BIT	      AF
+ES				  BIT	      AC
+ET0				  BIT	      A9
+ET1				  BIT	      AB
+EX0				  BIT	      A8
+EX1				  BIT	      AA
+EXTI0				  CODE	    0003
+EXTI1				  CODE	    0013
+F0				  BIT	      D5
+IE				  DATA	      A8
+IE0				  BIT	      89
+IE1				  BIT	      8B
+INT0				  BIT	      B2
+INT1				  BIT	      B3
+IP				  DATA	      B8
+IT0				  BIT	      88
+IT1				  BIT	      8A
+OV				  BIT	      D2
+P				  BIT	      D0
+P0				  DATA	      80
+P1				  DATA	      90
+P2				  DATA	      A0
+P3				  DATA	      B0
+PCON				  DATA	      87
+PS				  BIT	      BC
+PSW				  DATA	      D0
+PT0				  BIT	      B9
+PT1				  BIT	      BB
+PX0				  BIT	      B8
+PX1				  BIT	      BA
+RB8				  BIT	      9A
+RD				  BIT	      B7
+REN				  BIT	      9C
+RESET				  CODE	    0000
+RI				  BIT	      98
+RS0				  BIT	      D3
+RS1				  BIT	      D4
+RXD				  BIT	      B0
+SBUF				  DATA	      99
+SCON				  DATA	      98
+SINT				  CODE	    0023
+SM0				  BIT	      9F
+
+ASEM-51 V1.3                                         Copyright (c) 2002 by W.W. Heinz                                         PAGE 7
+
+
+
+SYMBOL				  TYPE     VALUE	LINE
+------------------------------------------------------------
+SM1				  BIT	      9E
+SM2				  BIT	      9D
+SP				  DATA	      81
+T0				  BIT	      B4
+T1				  BIT	      B5
+TB8				  BIT	      9B
+TCON				  DATA	      88
+TF0				  BIT	      8D
+TF1				  BIT	      8F
+TH0				  DATA	      8C
+TH1				  DATA	      8D
+TI				  BIT	      99
+TIMER0				  CODE	    000B
+TIMER1				  CODE	    001B
+TL0				  DATA	      8A
+TL1				  DATA	      8B
+TMOD				  DATA	      89
+TR0				  BIT	      8C
+TR1				  BIT	      8E
+TXD				  BIT	      B1
+WR				  BIT	      B6
+_BUZZER_NAPIS			  CODE	    0252	 225
+_EDIT_MSG_NAPIS			  CODE	    0249	 223
+_INIT				  CODE	    0100	  14
+_LCDRC				  DATA	      82	   3
+_LCDRD				  DATA	      83	   4
+_LCDWC				  DATA	      80	   1
+_LCDWD				  DATA	      81	   2
+_LCD_CMD_FROM_R7		  CODE	    020C	 193
+_LCD_CZYSC			  CODE	    01E5	 168
+_LCD_DATA_FROM_R7		  CODE	    0213	 200
+_LCD_INIT			  CODE	    01EB	 173
+_LCD_WAIT_WHILE_BUSY		  CODE	    0205	 186
+_LCD_WAIT_WHILE_BUSY_END	  CODE	    020B	 190
+_LED_NAPIS			  CODE	    0259	 227
+_LOOP				  CODE	    0109	  19
+_MAIN_MENU_NAPIS		  CODE	    021C	 209
+_MENU				  DATA	      30	   6
+_MENU_WYSWIETLANIE		  CODE	    010D	  23
+_MSG_NAPIS			  CODE	    0226	 211
+_NAPISZ_BUZZER			  CODE	    01BA	 133
+_NAPISZ_EDIT_MSG		  CODE	    01B3	 128
+_NAPISZ_END			  CODE	    01E4	 165
+_NAPISZ_LED			  CODE	    01C1	 138
+_NAPISZ_MAIN_MENU		  CODE	    01C8	 143
+_NAPISZ_MSG			  CODE	    0189	  98
+_NAPISZ_READ			  CODE	    01A5	 118
+_NAPISZ_SEND			  CODE	    019E	 113
+_NAPISZ_SETTINGS		  CODE	    0190	 103
+_NAPISZ_TEST			  CODE	    0197	 108
+_NAPISZ_UPTIME			  CODE	    01AC	 123
+_NAPISZ_WHILE			  CODE	    01D9	 157
+_NAPISZ_ZNAK			  CODE	    01D2	 152
+_READ_NAPIS			  CODE	    023D	 219
+_RESET				  CODE	    0000	  10
+_SEND_NAPIS			  CODE	    0238	 217
+
+ASEM-51 V1.3                                         Copyright (c) 2002 by W.W. Heinz                                         PAGE 8
+
+
+
+SYMBOL				  TYPE     VALUE	LINE
+------------------------------------------------------------
+_SETTINGS_NAPIS			  CODE	    022A	 213
+_TEST_NAPIS			  CODE	    0233	 215
+_UPTIME_NAPIS			  CODE	    0242	 221
+_WYSWIETLANIE_BUZZER		  CODE	    0175	  86
+_WYSWIETLANIE_EDIT_MSG		  CODE	    016B	  80
+_WYSWIETLANIE_LED		  CODE	    017F	  92
+_WYSWIETLANIE_MSG		  CODE	    0138	  47
+_WYSWIETLANIE_READ		  CODE	    0157	  68
+_WYSWIETLANIE_SEND		  CODE	    014D	  62
+_WYSWIETLANIE_SETTINGS		  CODE	    013F	  52
+_WYSWIETLANIE_TEST		  CODE	    0146	  57
+_WYSWIETLANIE_UPTIME		  CODE	    0161	  74
+_ZNAK_NAPIS			  CODE	    021A	 207

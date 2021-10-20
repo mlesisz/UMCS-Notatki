@@ -1,0 +1,490 @@
+
+ASEM-51 V1.3                                         Copyright (c) 2002 by W.W. Heinz                                         PAGE 1
+
+
+
+
+
+       MCS-51 Family Macro Assembler   A S E M - 5 1   V 1.3
+       =====================================================
+
+
+
+	Source File:	NA_OCENE.asm
+	Object File:	NA_OCENE.hex
+	List File:	NA_OCENE.lst
+
+
+
+ Line  I  Addr  Code            Source
+
+    1:				;
+    2:				;	zamierzam wyswietlic rozne cyfry na roznych wyswietlaczach 7-seg
+    3:				;
+    4:		N      FF30	CSDS16	equ 0FF30h		; bufor wyboru wskaznika 7-segmentowego
+    5:		N      FF38	CSDB16	equ 0FF38h		; bufor danych wskaznika 7-segmentowego
+    6:		B      0096	WYSW	equ P1.6		; wyswietlacze
+    7:		N      007A	CZAS	equ 7Ah			;tablica 6 cyfr zegarka
+    8:		N	 7F	WPZ		bit 7Fh			;wystapilo przerwanie zegarowe
+    9:		N      0079	GG		equ 79h			;godziny
+   10:		N      0078	MM		equ 78h			;minuty
+   11:		N      0077	SS		equ 77h			;sekundy
+   12:
+   13:		B	 B5	SKEY	bit P3.5		;test klawiatury sekwencyjnej
+   14:		N      0076	STAK	equ	76h			;stan klawiatury
+   15:		N	 75	CONFIG  bit 75h			;config mode
+   16:		N      0074	SLAST	equ 74h			;poprzedni stan klawiatury
+   17:
+   18:		N      0000	org 0
+   19:	  0000	02 01 00		ljmp start  ;przeskakujemy obszar zarezerwowany na przerwania
+   20:
+   21:		N      000B	org 0Bh	;obsluga przerwania od TIMER0
+   22:
+   23:					;mov TH0,#254  		;to mi daje 1800 przerwan / sekunde w trybie 1
+   24:	  000B	75 8C F0	    mov TH0, #256-16	;to mi daje 1800 przerwan / sekunde w trybie 0
+   25:	  000E	D2 7F			setb WPZ            ;sygnalizuje petli glownej wystapienie przerwania
+   26:	  0010	32			reti 				;powrot z przerwania
+   27:
+   28:		N      0100	org 100h
+   29:
+   30:				;przygotowanie srodowiska pracy programu #########################
+   31:	  0100			start:
+   32:
+   33:	  0100	75 79 17	 	mov GG, #23
+   34:	  0103	75 78 3B		mov MM, #59
+   35:	  0106	75 77 2D		mov SS, #45
+   36:
+   37:	  0109	E5 77		    mov A, SS
+   38:	  010B	75 F0 0A		mov B, #10
+   39:	  010E	84			div AB
+   40:	  010F	85 F0 7A		mov CZAS+0, B      ;przygotowanie tablicy czas
+   41:	  0112	F5 7B			mov CZAS+1, A
+   42:
+   43:	  0114	E5 78		    mov A, MM
+
+ASEM-51 V1.3                                         Copyright (c) 2002 by W.W. Heinz                                         PAGE 2
+
+
+
+ Line  I  Addr  Code            Source
+
+   44:	  0116	75 F0 0A		mov B, #10
+   45:	  0119	84			div AB
+   46:	  011A	85 F0 7C		mov CZAS+2, B
+   47:	  011D	F5 7D			mov CZAS+3, A
+   48:
+   49:	  011F	E5 79			mov A, GG
+   50:	  0121	75 F0 0A		mov B, #10
+   51:	  0124	84			div AB
+   52:	  0125	85 F0 7E		mov CZAS+4, B
+   53:	  0128	F5 7F			mov CZAS+5, A
+   54:
+   55:	  012A	7F 01			mov R7, #00000001b  ;najmlodszy wyswietlacz
+   56:	  012C	7E 7A			mov R6, #CZAS       ;wartosc startowa licznika petli
+   57:	  012E	78 7A			mov R0, #CZAS       ;najmlodsza cyfra zegarka
+   58:
+   59:	  0130	75 A8 00		mov IE, #0			;blokada ubslugi przerwan
+   60:
+   61:	  0133	75 8C FE		mov TH0, #254		;to mi daje 1800 przerwan / sekunde w trybie 1
+   62:	  0136	75 8C F0		mov TH0, #256-16	;to mi daje 1800 przerwan / sekunde w trybie 0
+   63:
+   64:	  0139	75 89 70		mov TMOD, #01110000b;blokada TIMER1 i tryb 0 dla TIMER0
+   65:
+   66:	  013C	D2 8C			setb TR0			;zgoda na zliczanie przez TIMER0
+   67:	  013E	D2 A9			setb ET0			;zgoda na obsluge przerwania od TIMER0
+   68:	  0140	D2 AF			setb EA				;globalna zgoda na obsluge przerwan
+   69:
+   70:	  0142	7B 08			mov R3, #8
+   71:	  0144	7C 08			mov R4, #8
+   72:
+   73:	  0146	75 76 00		mov STAK, #0
+   74:	  0149	75 74 00		mov SLAST, #0
+   75:	  014C	C2 75			clr CONFIG
+   76:
+   77:				;petla glowna programu    #####################################
+   78:	  014E			main_loop:
+   79:	  014E	30 7F FD		jnb WPZ, main_loop  ;czekam na przerwanie zegarowe
+   80:	  0151	C2 7F			clr WPZ             ;zapominam o przerwaniu zegarowym
+   81:
+   82:	  0153	51 30			acall displayService  ;odswiezam wyswietlacz 1800 razy na sekunde
+   83:										  ;tutaj jestem 1800 razy/sekunde
+   84:
+   85:
+   86:	  0155	20 75 F6		jb CONFIG, main_loop ; pomin odliczanie czasu jesli jestes w trybie konfiguracji
+   87:
+   88:	  0158	DB F4			djnz r3, main_loop		;odliczanie od 1800 do zera
+   89:	  015A	DC F2			djnz r4, main_loop
+   90:	  015C	7B 08			mov R3, #8				;czyszczenie licznika
+   91:	  015E	7C 08			mov R4, #8
+   92:
+   93:	  0160	31 ED			acall increment_clock
+   94:	  0162	80 EA			sjmp main_loop
+   95:
+   96:				; ustawianie zegarka ##################################################
+   97:	  0164			keyboard:
+   98:	  0164	E5 76			mov A, STAK
+   99:	  0166	B5 74 01		cjne A, SLAST, keyboard_go_on
+
+ASEM-51 V1.3                                         Copyright (c) 2002 by W.W. Heinz                                         PAGE 3
+
+
+
+ Line  I  Addr  Code            Source
+
+  100:	  0169	22			ret
+  101:	  016A			keyboard_go_on:
+  102:	  016A	F5 74			mov SLAST, A
+  103:	  016C	20 E1 16		jb ACC.1, set_configuration_mode	;przycisk ESC
+  104:	  016F	20 E0 19		jb ACC.0, exit_configuration_mode	;przycisk ENTER
+  105:
+  106:	  0172	30 75 0D		jnb CONFIG, keyboard_end
+  107:	  0175	20 E3 17		jb ACC.3, keyboard_increment		;przycisk UP
+  108:	  0178	20 E4 4B		jb ACC.4, keyboard_decrement		;przycisk DOWN
+  109:	  017B	20 E5 3A		jb ACC.5, keyboard_left				;przycisk LEFT
+  110:	  017E	20 E2 3E		jb ACC.2, keyboard_right			;przycisk RIGHT
+  111:	  0181	22			ret
+  112:
+  113:	  0182			keyboard_end:
+  114:	  0182	51 0E			acall update
+  115:	  0184	22			ret
+  116:
+  117:	  0185			set_configuration_mode:
+  118:	  0185	D2 75			setb CONFIG
+  119:	  0187	7A 03			mov R2, #3			;zmiana ss, #2 -> zmiana MM, #3 -> zmiana GG
+  120:	  0189	80 F7			sjmp keyboard_end
+  121:
+  122:	  018B			exit_configuration_mode:
+  123:	  018B	C2 75			clr CONFIG
+  124:	  018D	80 F3			sjmp keyboard_end
+  125:
+  126:				;zwiekszanie ################
+  127:	  018F			keyboard_increment:
+  128:	  018F	BA 01 0A		cjne R2, #1, keyboard_increment_check_MM
+  129:	  0192	05 77			inc SS
+  130:	  0194	A9 77			mov R1, SS
+  131:	  0196	B9 3C 1D		cjne R1, #60, keyboard_increment_wait
+  132:	  0199	75 77 00		mov SS, #0
+  133:	  019C			keyboard_increment_check_MM:
+  134:	  019C	BA 02 0A		cjne R2, #2, keyboard_increment_check_GG
+  135:	  019F	05 78			inc MM
+  136:	  01A1	A9 78			mov R1, MM
+  137:	  01A3	B9 3C 10		cjne R1, #60, keyboard_increment_wait
+  138:	  01A6	75 78 00		mov MM, #0
+  139:	  01A9			keyboard_increment_check_GG:
+  140:	  01A9	BA 03 0A		cjne R2, #3, keyboard_increment_wait
+  141:	  01AC	05 79			inc GG
+  142:	  01AE	A9 79			mov R1, GG
+  143:	  01B0	B9 18 03		cjne R1, #24, keyboard_increment_wait
+  144:	  01B3	75 79 00		mov GG, #0
+  145:	  01B6			keyboard_increment_wait:
+  146:	  01B6	80 CA			sjmp keyboard_end
+  147:
+  148:				;przestawianie w lewo
+  149:	  01B8			keyboard_left:
+  150:	  01B8	0A			inc R2
+  151:	  01B9	BA 04 01		cjne R2, #4, keyboard_left_wait
+  152:	  01BC	1A			dec R2
+  153:	  01BD			keyboard_left_wait:
+  154:	  01BD	80 C3			sjmp keyboard_end
+  155:
+
+ASEM-51 V1.3                                         Copyright (c) 2002 by W.W. Heinz                                         PAGE 4
+
+
+
+ Line  I  Addr  Code            Source
+
+  156:				;przestawianie w prawo
+  157:	  01BF			keyboard_right:
+  158:	  01BF	1A			dec R2
+  159:	  01C0	BA 00 01		cjne R2, #0, keyboard_right_wait
+  160:	  01C3	0A			inc R2
+  161:	  01C4			keyboard_right_wait:
+  162:	  01C4	80 BC			sjmp keyboard_end
+  163:
+  164:				;zmniejszanie ################
+  165:	  01C6			keyboard_decrement:
+  166:	  01C6	BA 01 0A		cjne R2, #1, keyboard_decrement_check_MM
+  167:	  01C9	15 77			dec SS
+  168:	  01CB	A9 77			mov R1, SS
+  169:	  01CD	B9 FF 1A		cjne R1, #0ffh, keyboard_decrement_wait
+  170:	  01D0	75 77 3B		mov SS, #59
+  171:	  01D3			keyboard_decrement_check_MM:
+  172:	  01D3	BA 02 0A		cjne R2, #2, keyboard_decrement_check_GG
+  173:	  01D6	15 78			dec MM
+  174:	  01D8	A9 78			mov R1, MM
+  175:	  01DA	B9 FF 0D		cjne R1, #0ffh, keyboard_decrement_wait
+  176:	  01DD	75 78 3B		mov MM, #59
+  177:	  01E0			keyboard_decrement_check_GG:
+  178:	  01E0	15 79			dec GG
+  179:	  01E2	A9 79			mov R1, GG
+  180:	  01E4	B9 FF 03		cjne R1, #0ffh, keyboard_decrement_wait
+  181:	  01E7	75 79 17		mov GG, #23
+  182:	  01EA			keyboard_decrement_wait:
+  183:	  01EA	02 01 82		ljmp keyboard_end
+  184:
+  185:
+  186:
+  187:				; odliczanie czasu  ####################################################
+  188:	  01ED			increment_clock:
+  189:	  01ED	05 77			inc SS					;zwieksz sekundy
+  190:
+  191:	  01EF	E5 77			mov A, SS				; jesli sekundy > 60
+  192:	  01F1	B4 3C 1A		cjne A, #60, update
+  193:	  01F4	75 77 00		mov SS, #0
+  194:	  01F7	05 78			inc MM					;zwieksz minuty
+  195:
+  196:	  01F9	E5 78			mov A, MM				; jesli minuty > 60
+  197:	  01FB	B4 3C 10		cjne A, #60, update
+  198:	  01FE	75 78 00		mov MM, #0
+  199:	  0201	05 79			inc GG					;zwieksz godziny
+  200:
+  201:	  0203	E5 79			mov A, GG				;jesli godziny > 24
+  202:	  0205	B4 18 06		cjne A, #24, update
+  203:	  0208	75 79 00		mov GG, #0
+  204:
+  205:	  020B	51 0E			acall update
+  206:	  020D	22			ret
+  207:				; odliczanie czasu koniec  ####################################################
+  208:
+  209:				; aktualizacja wyswietlacza  ####################################################
+  210:	  020E			update:
+  211:
+
+ASEM-51 V1.3                                         Copyright (c) 2002 by W.W. Heinz                                         PAGE 5
+
+
+
+ Line  I  Addr  Code            Source
+
+  212:	  020E	E5 77			mov A, SS				;ustaw sekundy na wyswietlaczu
+  213:	  0210	75 F0 0A		mov B, #10
+  214:	  0213	84			div AB
+  215:	  0214	85 F0 7A		mov CZAS + 0, B
+  216:	  0217	F5 7B			mov CZAS + 1, A
+  217:
+  218:	  0219	E5 78			mov A, MM				;ustaw minuty na wyswietlaczu
+  219:	  021B	75 F0 0A		mov B, #10
+  220:	  021E	84			div AB
+  221:	  021F	85 F0 7C		mov CZAS + 2, B
+  222:	  0222	F5 7D			mov CZAS + 3, A
+  223:
+  224:	  0224	E5 79			mov A, GG				;ustaw godzine na wyswietlaczu
+  225:	  0226	75 F0 0A		mov B, #10
+  226:	  0229	84			div AB
+  227:	  022A	85 F0 7E		mov CZAS + 4, B
+  228:	  022D	F5 7F			mov CZAS + 5, A
+  229:
+  230:	  022F	22			ret
+  231:				; aktualizacja wyswietlacza koniec ####################################################
+  232:
+  233:				;obsluga wyswietlacza ###################################
+  234:	  0230			displayService:
+  235:
+  236:	  0230	90 02 63		mov DPTR, #wzory     ;wzorek odpowiadajacy cyfrze zegarka
+  237:	  0233	E6			mov A, @R0           ;z tablicy czas
+  238:	  0234	08			inc R0               ;nastepna cyfra
+  239:	  0235	93			movc A, @A + DPTR    ;wzorek do akulumatora
+  240:
+  241:	  0236	D2 96			setb WYSW           ; wylaczam wyswietlacze
+  242:	  0238	90 FF 38		mov DPTR, #CSDB16 	; segmenty
+  243:	  023B	F0			movx @DPTR, A       ; wlasciwe wlaczenie segmentow
+  244:
+  245:	  023C	90 FF 30	    mov DPTR, #CSDS16 	;wskazniki
+  246:	  023F	EF			mov A, R7           ;aktualny wyswietlacz do akumulatora
+  247:	  0240	F0			movx @DPTR, A       ;wybierz wyswietlacz
+  248:
+  249:	  0241	C2 96			clr WYSW			; wlacza wyswietlacze
+  250:
+  251:	  0243	A2 B5			mov c, SKEY
+  252:	  0245	50 02			jnc displayService_con
+  253:	  0247	42 76			orl STAK, A
+  254:
+  255:	  0249			displayService_con:
+  256:
+  257:	  0249	23			rl A                ;przeskakujemy na nastepny wyswietlacz
+  258:	  024A	FF		    mov R7, A           ;zapamietujemy nastepny wyswietlacz w R7
+  259:	  024B	DD FE			djnz R5, $
+  260:
+  261:
+  262:	  024D	EF			mov A, R7
+  263:	  024E	30 E7 11		jnb ACC.7, displayServiceRet;sprawdzamy czy nie minelismy diody F1..ERR
+  264:	  0251	7F 01			mov R7, #00000001b  ;jezeli tak to wracamy na najmlodszy wyswietlacz
+  265:	  0253	31 64			acall keyboard		;obsluga klawiatury
+  266:	  0255	75 76 00		mov STAK, #0
+  267:	  0258	DD FE			djnz R5, $
+
+ASEM-51 V1.3                                         Copyright (c) 2002 by W.W. Heinz                                         PAGE 6
+
+
+
+ Line  I  Addr  Code            Source
+
+  268:	  025A	78 7A			mov R0, #CZAS       ;i cyfre jednostek sekund
+  269:
+  270:	  025C	0E			inc R6				;zwiekszamy licznik petli
+  271:	  025D	BE 80 02		cjne R6, #CZAS+6, displayServiceRet ;warunek koncowy licznika petli
+  272:	  0260	7E 7A			mov R6, #CZAS		;wartosc startowa licznika petli
+  273:
+  274:	  0262			displayServiceRet:
+  275:	  0262	22			ret                 ; powrot do petli glownej
+  276:
+  277:				;koniec obslugi wyswietlacza ###################################
+  278:
+  279:	  0263			wzory:
+  280:	  0263	3F 06			db	00111111b, 00000110b
+  281:	  0265	5B 4F			db	01011011b, 01001111b
+  282:	  0267	66 6D			db	01100110b, 01101101b
+  283:	  0269	7D 07			db	01111101b, 00000111b
+  284:	  026B	7F 6F			db	01111111b, 01101111b
+  285:	  026D	77 7C			db	01110111b, 01111100b
+  286:	  026F	58 5E			db	01011000b, 01011110b
+  287:	  0271	79 71			db	01111001b, 01110001b
+  288:
+  289:				end
+
+
+
+
+
+                     register banks used:  ---
+
+                     no errors
+
+
+
+
+ASEM-51 V1.3                                         Copyright (c) 2002 by W.W. Heinz                                         PAGE 7
+
+
+
+
+
+	       L I S T   O F   S Y M B O L S
+	       =============================
+
+
+SYMBOL				  TYPE     VALUE	LINE
+------------------------------------------------------------
+??ASEM_51			  NUMBER    8051
+??VERSION			  NUMBER    0130
+AC				  BIT	      D6
+ACC				  DATA	      E0
+B				  DATA	      F0
+CONFIG				  BIT	      75	  15
+CSDB16				  NUMBER    FF38	   5
+CSDS16				  NUMBER    FF30	   4
+CY				  BIT	      D7
+CZAS				  NUMBER    007A	   7
+DISPLAYSERVICE			  CODE	    0230	 234
+DISPLAYSERVICERET		  CODE	    0262	 274
+DISPLAYSERVICE_CON		  CODE	    0249	 255
+DPH				  DATA	      83
+DPL				  DATA	      82
+EA				  BIT	      AF
+ES				  BIT	      AC
+ET0				  BIT	      A9
+ET1				  BIT	      AB
+EX0				  BIT	      A8
+EX1				  BIT	      AA
+EXIT_CONFIGURATION_MODE		  CODE	    018B	 122
+EXTI0				  CODE	    0003
+EXTI1				  CODE	    0013
+F0				  BIT	      D5
+GG				  NUMBER    0079	   9
+IE				  DATA	      A8
+IE0				  BIT	      89
+IE1				  BIT	      8B
+INCREMENT_CLOCK			  CODE	    01ED	 188
+INT0				  BIT	      B2
+INT1				  BIT	      B3
+IP				  DATA	      B8
+IT0				  BIT	      88
+IT1				  BIT	      8A
+KEYBOARD			  CODE	    0164	  97
+KEYBOARD_DECREMENT		  CODE	    01C6	 165
+KEYBOARD_DECREMENT_CHECK_GG	  CODE	    01E0	 177
+KEYBOARD_DECREMENT_CHECK_MM	  CODE	    01D3	 171
+KEYBOARD_DECREMENT_WAIT		  CODE	    01EA	 182
+KEYBOARD_END			  CODE	    0182	 113
+KEYBOARD_GO_ON			  CODE	    016A	 101
+KEYBOARD_INCREMENT		  CODE	    018F	 127
+KEYBOARD_INCREMENT_CHECK_GG	  CODE	    01A9	 139
+KEYBOARD_INCREMENT_CHECK_MM	  CODE	    019C	 133
+KEYBOARD_INCREMENT_WAIT		  CODE	    01B6	 145
+KEYBOARD_LEFT			  CODE	    01B8	 149
+KEYBOARD_LEFT_WAIT		  CODE	    01BD	 153
+KEYBOARD_RIGHT			  CODE	    01BF	 157
+KEYBOARD_RIGHT_WAIT		  CODE	    01C4	 161
+
+ASEM-51 V1.3                                         Copyright (c) 2002 by W.W. Heinz                                         PAGE 8
+
+
+
+SYMBOL				  TYPE     VALUE	LINE
+------------------------------------------------------------
+MAIN_LOOP			  CODE	    014E	  78
+MM				  NUMBER    0078	  10
+OV				  BIT	      D2
+P				  BIT	      D0
+P0				  DATA	      80
+P1				  DATA	      90
+P2				  DATA	      A0
+P3				  DATA	      B0
+PCON				  DATA	      87
+PS				  BIT	      BC
+PSW				  DATA	      D0
+PT0				  BIT	      B9
+PT1				  BIT	      BB
+PX0				  BIT	      B8
+PX1				  BIT	      BA
+RB8				  BIT	      9A
+RD				  BIT	      B7
+REN				  BIT	      9C
+RESET				  CODE	    0000
+RI				  BIT	      98
+RS0				  BIT	      D3
+RS1				  BIT	      D4
+RXD				  BIT	      B0
+SBUF				  DATA	      99
+SCON				  DATA	      98
+SET_CONFIGURATION_MODE		  CODE	    0185	 117
+SINT				  CODE	    0023
+SKEY				  BIT	      B5	  13
+SLAST				  NUMBER    0074	  16
+SM0				  BIT	      9F
+SM1				  BIT	      9E
+SM2				  BIT	      9D
+SP				  DATA	      81
+SS				  NUMBER    0077	  11
+STAK				  NUMBER    0076	  14
+START				  CODE	    0100	  31
+T0				  BIT	      B4
+T1				  BIT	      B5
+TB8				  BIT	      9B
+TCON				  DATA	      88
+TF0				  BIT	      8D
+TF1				  BIT	      8F
+TH0				  DATA	      8C
+TH1				  DATA	      8D
+TI				  BIT	      99
+TIMER0				  CODE	    000B
+TIMER1				  CODE	    001B
+TL0				  DATA	      8A
+TL1				  DATA	      8B
+TMOD				  DATA	      89
+TR0				  BIT	      8C
+TR1				  BIT	      8E
+TXD				  BIT	      B1
+UPDATE				  CODE	    020E	 210
+WPZ				  BIT	      7F	   8
+WR				  BIT	      B6
+
+ASEM-51 V1.3                                         Copyright (c) 2002 by W.W. Heinz                                         PAGE 9
+
+
+
+SYMBOL				  TYPE     VALUE	LINE
+------------------------------------------------------------
+WYSW				  NUMBER    0096	   6
+WZORY				  CODE	    0263	 279

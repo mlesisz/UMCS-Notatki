@@ -1,0 +1,74 @@
+CSDS	XDATA 0FF30h
+
+SKEY	bit P3.5		;test klawiatury sekwencyjnej
+STAK	equ	76h		;stan klawiatury
+CONFIG  bit 75h			;config mode
+SLAST	equ 74h			;poprzedni stan klawiatury
+
+	ORG 0000h
+_RESET:
+	LJMP _INIT
+
+	
+	ORG 0100h
+_INIT:
+
+
+_LOOP:
+	CALL KEYBOARD
+	LJMP _LOOP
+
+
+KEYBOARD:
+	
+	MOV DPTR, #CSDS
+
+	MOV A,#00000010b
+	MOVX @DPTR,A
+	jb P3.5, KEYBOARD_ESC		;przycisk ESC
+	MOV A,#00000001b
+	MOVX @DPTR,A
+	jb P3.5, KEYBOARD_ENTER	;przycisk ENTER
+	MOV A,#00001000b
+	MOVX @DPTR,A
+	jb P3.5, KEYBOARD_UP		;przycisk UP
+	MOV A,#00010000b
+	MOVX @DPTR,A
+	jb P3.5, KEYBOARD_DOWN		;przycisk DOWN
+	MOV A,#00100000b
+	MOVX @DPTR,A
+	jb P3.5, KEYBOARD_LEFT		;przycisk LEFT
+	MOV A,#00000100b
+	MOVX @DPTR,A
+	jb P3.5, KEYBOARD_RIGHT	;przycisk RIGHT
+	ret
+
+KEYBOARD_END:
+
+	ret
+
+KEYBOARD_ESC:
+	CPL P1.7
+	sjmp KEYBOARD_END
+
+KEYBOARD_ENTER:
+	CPL P1.7
+	sjmp KEYBOARD_END
+
+KEYBOARD_UP:
+	CPL P1.7
+	sjmp KEYBOARD_END
+
+KEYBOARD_DOWN:
+	CPL P1.7
+	sjmp KEYBOARD_END
+
+KEYBOARD_LEFT:
+	CPL P1.7
+	sjmp KEYBOARD_END
+
+KEYBOARD_RIGHT:
+	CPL P1.7
+	sjmp KEYBOARD_END
+
+END

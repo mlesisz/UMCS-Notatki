@@ -1,0 +1,397 @@
+
+ASEM-51 V1.3                                         Copyright (c) 2002 by W.W. Heinz                                         PAGE 1
+
+
+
+
+
+       MCS-51 Family Macro Assembler   A S E M - 5 1   V 1.3
+       =====================================================
+
+
+
+	Source File:	NaOcene.asm
+	Object File:	NaOcene.hex
+	List File:	NaOcene.lst
+
+
+
+ Line  I  Addr  Code            Source
+
+    1:		N	 2F	_LED	DATA 02Fh
+    2:
+    3:		N	 30	_WSK1	DATA	030h
+    4:		N	 31	_WSK2	DATA	031h
+    5:		N	 32	_WSK3	DATA	032h
+    6:		N	 33	_WSK4	DATA	033h
+    7:		N	 34	_WSK5	DATA	034h
+    8:		N	 35	_WSK6	DATA	035h
+    9:
+   10:		N	 36	_WSK_INDEKS	DATA	036h
+   11:
+   12:		N      FF30	_CSDS	EQU 0FF30h
+   13:		N      FF38	_CSDB	EQU 0FF38h
+   14:
+   15:		N      007A	_LICZNIK	equ 7Ah
+   16:		N	 7F	_WPZ		bit 7Fh		;wystapilo przerwanie zegarowe
+   17:
+   18:		N	 7B	_KONFI		bit 7Bh
+   19:		N      007C	_SKLA		equ 7Ch		;stan klawiatury
+   20:		N      007D	_OKLA		equ 7Dh		;poprzedni stan klawiatury
+   21:
+   22:		N      0000		ORG 0000h
+   23:	  0000			_RESET:
+   24:	  0000	02 01 00		LJMP _INIT
+   25:
+   26:		N      000B		ORG 000Bh
+   27:	  000B			_OVRFL:				;obsługa przerwania
+   28:	  000B	75 8C F0		MOV TH0,#256-16		;to mi daje 1800 przerwan /sekunde w trybie 0
+   29:	  000E	D2 7F			SETB _WPZ		;sygnalizuje petli glownej wystapienie przerwania
+   30:	  0010	32			RETI			;powrot z przerwania
+   31:
+   32:		N      0100		ORG 0100h
+   33:	  0100			_INIT:
+   34:	  0100	75 7A 00		MOV _LICZNIK,#0
+   35:	  0103	12 01 A5		CALL _7SEG_INIT		;Inicjalizuje wartości potrzebne do wyświetlacza
+   36:	  0106	12 01 7F		CALL _7SEG_REF		;Wyświetlam początkowe wartości na wyświeltaczu(same zera)
+   37:
+   38:	  0109	75 A8 00		MOV IE,#0		;blokada uslugi przerwan
+   39:
+   40:	  010C	75 8C F0		MOV TH0,#256-16		;to mi daje 1800 przerwan / sekunde w trybie 0
+   41:
+   42:	  010F	75 89 70		MOV TMOD, #01110000b	;blokada TIMER1 i tryb 0 dla TIMER0
+   43:
+
+ASEM-51 V1.3                                         Copyright (c) 2002 by W.W. Heinz                                         PAGE 2
+
+
+
+ Line  I  Addr  Code            Source
+
+   44:	  0112	D2 8C			SETB TR0		;zgoda na zliczanie przez TIMER0/uruchomienie licznika
+   45:	  0114	D2 A9			SETB ET0		;zgoda na obsluge przerwania od TIMER0
+   46:	  0116	D2 AF			SETB EA			;globalna zgoda na obsluge przerwan
+   47:
+   48:	  0118	7B 08			MOV R3,#8
+   49:	  011A	7C 08			MOV R4,#8
+   50:
+   51:	  011C	75 7D 00		MOV _OKLA,#0
+   52:
+   53:	  011F	D2 7B			SETB _KONFI
+   54:
+   55:	  0121			_LOOP:
+   56:	  0121	30 7F FD		JNB _WPZ,_LOOP		;czy przerwanie zegarowe
+   57:	  0124	C2 7F			CLR _WPZ		;-
+   58:	  0126	12 01 3F		CALL _KLAWIATURA
+   59:	  0129	12 01 7F		CALL _7SEG_REF		;odswiezam wyswietlacz 1800 na sekunde
+   60:
+   61:	  012C	30 7B F2		JNB _KONFI,_LOOP
+   62:
+   63:	  012F	DB F0			DJNZ R3,_LOOP		;odliczanie od 1800 do zera
+   64:	  0131	DC EE			DJNZ R4,_LOOP
+   65:	  0133	7B 08			MOV R3,#8		;odnowienie licznika petli
+   66:	  0135	7C 08			MOV R4,#8		;-//-
+   67:	  0137	05 7A			INC _LICZNIK		;zwiekszenie licznkia o 1
+   68:	  0139	12 01 BE		CALL _ODL_CZASU		;przeliczenie licznika aby go wyswietlic
+   69:	  013C	02 01 21		LJMP	_LOOP
+   70:
+   71:	  013F			_KLAWIATURA:
+   72:	  013F	D2 96			SETB P1.6		;wylacza wyswietlacz
+   73:	  0141	7F 01			MOV R7,#1		;wybieram najmlodszy bit do wyboru klawiszy
+   74:	  0143	75 7C 00		MOV _SKLA,#0		;zeruje stan poczatkowy klawiatury
+   75:	  0146			_KL_FOR:
+   76:
+   77:	  0146	EF			MOV A , R7		;aktualnie wybrany klawisz patrze
+   78:	  0147	90 FF 30		MOV DPTR,#_CSDS		;czy jest nacisniety
+   79:	  014A	F0			MOVX @DPTR,A		;-//-
+   80:	  014B	A2 B5			MOV C,P3.5		;-//-
+   81:	  014D	50 02			JNC _POMIN
+   82:	  014F	42 7C			ORL _SKLA,A		;jesli jest to zapisuje go
+   83:	  0151			_POMIN:
+   84:	  0151	23			RL A			;wybor nastepnego klawisza
+   85:	  0152	FF			MOV R7,A		;zapisuje wybor w R7
+   86:
+   87:	  0153	30 E6 F0		JNB ACC.6,_KL_FOR	;sprawdzam czy sprawidzilem wszystkie klawisze
+   88:
+   89:	  0156	E5 7C			MOV A,_SKLA
+   90:	  0158	B5 7D 01		CJNE A,_OKLA,_KLAWIATURA_DZI
+   91:	  015B	22			RET
+   92:
+   93:	  015C			_KLAWIATURA_DZI:		;patrze co zostalo wcisniete
+   94:	  015C	F5 7D			MOV _OKLA,A
+   95:	  015E	20 E0 07		JB ACC.0,_ENTER
+   96:	  0161	20 E3 09		JB ACC.3,_UP
+   97:	  0164	20 E4 0E		JB ACC.4,_DOWN
+   98:	  0167			_KLAWIATURA_END:
+   99:
+
+ASEM-51 V1.3                                         Copyright (c) 2002 by W.W. Heinz                                         PAGE 3
+
+
+
+ Line  I  Addr  Code            Source
+
+  100:	  0167	22			RET
+  101:	  0168			_ENTER:
+  102:	  0168	B2 7B			CPL _KONFI
+  103:	  016A	D2 97			SETB P1.7
+  104:	  016C	22			RET
+  105:	  016D			_UP:
+  106:	  016D	05 7A			INC _LICZNIK
+  107:	  016F	12 01 BE		CALL _ODL_CZASU
+  108:	  0172	D2 95			SETB P1.5
+  109:	  0174	22			RET
+  110:	  0175			_DOWN:
+  111:	  0175	15 7A			DEC _LICZNIK
+  112:	  0177	12 01 BE		CALL _ODL_CZASU
+  113:	  017A	C2 95			CLR P1.5
+  114:	  017C	C2 97			CLR P1.7
+  115:	  017E	22			RET
+  116:
+  117:	  017F			_7SEG_REF:
+  118:	  017F	D2 96			SETB P1.6
+  119:
+  120:	  0181	74 80			MOV A,#10000000b
+  121:	  0183	AF 36			MOV R7,_WSK_INDEKS
+  122:
+  123:	  0185			_INDEKSUJ:
+  124:	  0185	DF 03			DJNZ R7,_INDEKSUJ_CD
+  125:	  0187	02 01 8D		JMP _INDEKSUJ_END
+  126:
+  127:	  018A			_INDEKSUJ_CD:
+  128:	  018A	23			RL A
+  129:	  018B	80 F8			JMP _INDEKSUJ
+  130:	  018D			_INDEKSUJ_END:
+  131:
+  132:	  018D	90 FF 30		MOV DPTR,#_CSDS
+  133:	  0190	F0			MOVX	@DPTR,A
+  134:
+  135:	  0191	74 2F			MOV A,#_LED
+  136:	  0193	25 36			ADD A,_WSK_INDEKS
+  137:	  0195	14			DEC A
+  138:
+  139:	  0196	F8			MOV R0,A
+  140:
+  141:	  0197	E6			MOV A,@R0
+  142:	  0198	90 FF 38		MOV DPTR, #_CSDB
+  143:	  019B	F0			MOVX @DPTR,A
+  144:
+  145:
+  146:	  019C	C2 96			CLR P1.6
+  147:
+  148:	  019E	D5 36 03		DJNZ _WSK_INDEKS,_7SEG_REF_END
+  149:	  01A1	75 36 07		MOV _WSK_INDEKS,#7d
+  150:
+  151:	  01A4			_7SEG_REF_END:
+  152:	  01A4	22			RET
+  153:
+  154:
+  155:	  01A5			_7SEG_INIT:
+
+ASEM-51 V1.3                                         Copyright (c) 2002 by W.W. Heinz                                         PAGE 4
+
+
+
+ Line  I  Addr  Code            Source
+
+  156:
+  157:	  01A5	75 36 07		MOV _WSK_INDEKS,#7d
+  158:
+  159:	  01A8	75 2F 10		MOV _LED, #00010000b
+  160:	  01AB	75 30 3F		MOV _WSK1,#00111111b
+  161:	  01AE	75 31 3F		MOV _WSK2,#00111111b
+  162:	  01B1	75 32 3F		MOV _WSK3,#00111111b
+  163:	  01B4	75 33 3F		MOV _WSK4,#00111111b
+  164:	  01B7	75 34 3F		MOV _WSK5,#00111111b
+  165:	  01BA	75 35 3F		MOV _WSK6,#00111111b
+  166:
+  167:	  01BD	22			RET
+  168:
+  169:	  01BE			_ODL_CZASU:
+  170:					;jednosci
+  171:	  01BE	E5 7A			MOV A,_LICZNIK
+  172:	  01C0	75 F0 0A		MOV B,#10d
+  173:	  01C3	84			DIV AB
+  174:	  01C4	FD			MOV R5,A
+  175:
+  176:	  01C5	90 01 E3		MOV DPTR,#WZORCE_CYFR
+  177:	  01C8	E5 F0			MOV A,B
+  178:	  01CA	93			MOVC A,@A+DPTR
+  179:	  01CB	F5 30			MOV _WSK1,A
+  180:
+  181:					;dziesietne
+  182:	  01CD	ED			MOV A,R5
+  183:	  01CE	75 F0 0A		MOV B,#10d
+  184:	  01D1	84			DIV AB
+  185:	  01D2	FD			MOV R5,A
+  186:
+  187:	  01D3	90 01 E3		MOV DPTR,#WZORCE_CYFR
+  188:	  01D6	E5 F0			MOV A,B
+  189:	  01D8	93			MOVC A,@A+DPTR
+  190:	  01D9	F5 31			MOV _WSK2,A
+  191:
+  192:					;setne
+  193:	  01DB	90 01 E3		MOV DPTR,#WZORCE_CYFR
+  194:	  01DE	ED			MOV A,R5
+  195:	  01DF	93			MOVC A,@A+DPTR
+  196:	  01E0	F5 32			MOV _WSK3,A
+  197:
+  198:	  01E2	22			RET
+  199:
+  200:	  01E3			WZORCE_CYFR:
+  201:	  01E3	3F			DB 00111111b	;0
+  202:	  01E4	06			DB 00000110b	;1
+  203:	  01E5	5B			DB 01011011b	;2
+  204:	  01E6	4F			DB 01001111b	;3
+  205:	  01E7	66			DB 01100110b	;4
+  206:	  01E8	6D			DB 01101101b	;5
+  207:	  01E9	7D			DB 01111101b	;6
+  208:	  01EA	07			DB 00000111b	;7
+  209:	  01EB	7F			DB 01111111b	;8
+  210:	  01EC	6F			DB 01101111b	;9
+  211:
+
+ASEM-51 V1.3                                         Copyright (c) 2002 by W.W. Heinz                                         PAGE 5
+
+
+
+ Line  I  Addr  Code            Source
+
+  212:				END
+
+
+
+
+
+                     register banks used:  ---
+
+                     no errors
+
+
+
+
+ASEM-51 V1.3                                         Copyright (c) 2002 by W.W. Heinz                                         PAGE 6
+
+
+
+
+
+	       L I S T   O F   S Y M B O L S
+	       =============================
+
+
+SYMBOL				  TYPE     VALUE	LINE
+------------------------------------------------------------
+??ASEM_51			  NUMBER    8051
+??VERSION			  NUMBER    0130
+AC				  BIT	      D6
+ACC				  DATA	      E0
+B				  DATA	      F0
+CY				  BIT	      D7
+DPH				  DATA	      83
+DPL				  DATA	      82
+EA				  BIT	      AF
+ES				  BIT	      AC
+ET0				  BIT	      A9
+ET1				  BIT	      AB
+EX0				  BIT	      A8
+EX1				  BIT	      AA
+EXTI0				  CODE	    0003
+EXTI1				  CODE	    0013
+F0				  BIT	      D5
+IE				  DATA	      A8
+IE0				  BIT	      89
+IE1				  BIT	      8B
+INT0				  BIT	      B2
+INT1				  BIT	      B3
+IP				  DATA	      B8
+IT0				  BIT	      88
+IT1				  BIT	      8A
+OV				  BIT	      D2
+P				  BIT	      D0
+P0				  DATA	      80
+P1				  DATA	      90
+P2				  DATA	      A0
+P3				  DATA	      B0
+PCON				  DATA	      87
+PS				  BIT	      BC
+PSW				  DATA	      D0
+PT0				  BIT	      B9
+PT1				  BIT	      BB
+PX0				  BIT	      B8
+PX1				  BIT	      BA
+RB8				  BIT	      9A
+RD				  BIT	      B7
+REN				  BIT	      9C
+RESET				  CODE	    0000
+RI				  BIT	      98
+RS0				  BIT	      D3
+RS1				  BIT	      D4
+RXD				  BIT	      B0
+SBUF				  DATA	      99
+SCON				  DATA	      98
+SINT				  CODE	    0023
+SM0				  BIT	      9F
+
+ASEM-51 V1.3                                         Copyright (c) 2002 by W.W. Heinz                                         PAGE 7
+
+
+
+SYMBOL				  TYPE     VALUE	LINE
+------------------------------------------------------------
+SM1				  BIT	      9E
+SM2				  BIT	      9D
+SP				  DATA	      81
+T0				  BIT	      B4
+T1				  BIT	      B5
+TB8				  BIT	      9B
+TCON				  DATA	      88
+TF0				  BIT	      8D
+TF1				  BIT	      8F
+TH0				  DATA	      8C
+TH1				  DATA	      8D
+TI				  BIT	      99
+TIMER0				  CODE	    000B
+TIMER1				  CODE	    001B
+TL0				  DATA	      8A
+TL1				  DATA	      8B
+TMOD				  DATA	      89
+TR0				  BIT	      8C
+TR1				  BIT	      8E
+TXD				  BIT	      B1
+WR				  BIT	      B6
+WZORCE_CYFR			  CODE	    01E3	 200
+_7SEG_INIT			  CODE	    01A5	 155
+_7SEG_REF			  CODE	    017F	 117
+_7SEG_REF_END			  CODE	    01A4	 151
+_CSDB				  NUMBER    FF38	  13
+_CSDS				  NUMBER    FF30	  12
+_DOWN				  CODE	    0175	 110
+_ENTER				  CODE	    0168	 101
+_INDEKSUJ			  CODE	    0185	 123
+_INDEKSUJ_CD			  CODE	    018A	 127
+_INDEKSUJ_END			  CODE	    018D	 130
+_INIT				  CODE	    0100	  33
+_KLAWIATURA			  CODE	    013F	  71
+_KLAWIATURA_DZI			  CODE	    015C	  93
+_KLAWIATURA_END			  CODE	    0167	  98
+_KL_FOR				  CODE	    0146	  75
+_KONFI				  BIT	      7B	  18
+_LED				  DATA	      2F	   1
+_LICZNIK			  NUMBER    007A	  15
+_LOOP				  CODE	    0121	  55
+_ODL_CZASU			  CODE	    01BE	 169
+_OKLA				  NUMBER    007D	  20
+_OVRFL				  CODE	    000B	  27
+_POMIN				  CODE	    0151	  83
+_RESET				  CODE	    0000	  23
+_SKLA				  NUMBER    007C	  19
+_UP				  CODE	    016D	 105
+_WPZ				  BIT	      7F	  16
+_WSK1				  DATA	      30	   3
+_WSK2				  DATA	      31	   4
+_WSK3				  DATA	      32	   5
+_WSK4				  DATA	      33	   6
+_WSK5				  DATA	      34	   7
+_WSK6				  DATA	      35	   8
+_WSK_INDEKS			  DATA	      36	  10

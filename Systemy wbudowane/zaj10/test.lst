@@ -1,0 +1,267 @@
+
+ASEM-51 V1.3                                         Copyright (c) 2002 by W.W. Heinz                                         PAGE 1
+
+
+
+
+
+       MCS-51 Family Macro Assembler   A S E M - 5 1   V 1.3
+       =====================================================
+
+
+
+	Source File:	test.asm
+	Object File:	test.hex
+	List File:	test.lst
+
+
+
+ Line  I  Addr  Code            Source
+
+    1:				;====================================
+    2:				; @copyright-Abdul Rehman
+    3:				; @Licence Creative Common
+    4:				; This code used to display simple character...
+    5:				; on character lcd with 8051 microcontroller in assembly langauge
+    6:				;====================================
+    7:		D      0080	LCD_DATA_PORT EQU	P0
+    8:		B	 A0	RS	BIT	P2.0
+    9:		B	 A1	EN 	BIT	P2.1
+   10:		N	 82	_LCDRC	DATA	0FF82h
+   11:				;====================================
+   12:
+   13:		N      0000	ORG 0H
+   14:
+   15:				;------------------------------------
+   16:	  0000			MAIN:
+   17:	  0000	11 2E			ACALL	LCD_INIT
+   18:	  0002	74 44			MOV		A,#'D'
+   19:	  0004	11 4C			ACALL	LCD_WRITE_DATA
+   20:	  0006	11 59			ACALL	_LCD_WAIT_WHILE_BUSY
+   21:
+   22:	  0008	74 4F			MOV		A,#'O'
+   23:	  000A	11 4C			ACALL	LCD_WRITE_DATA
+   24:	  000C	11 59			ACALL	_LCD_WAIT_WHILE_BUSY
+   25:
+   26:
+   27:	  000E	74 4E			MOV		A,#'N'
+   28:	  0010	11 4C			ACALL	LCD_WRITE_DATA
+   29:	  0012	11 59			ACALL	_LCD_WAIT_WHILE_BUSY
+   30:
+   31:
+   32:	  0014	74 45			MOV		A,#'E'
+   33:	  0016	11 4C			ACALL	LCD_WRITE_DATA
+   34:	  0018	11 59			ACALL	_LCD_WAIT_WHILE_BUSY
+   35:
+   36:
+   37:	  001A	74 2E			MOV		A,#'.'
+   38:	  001C	11 4C			ACALL	LCD_WRITE_DATA
+   39:	  001E	11 59			ACALL	_LCD_WAIT_WHILE_BUSY
+   40:
+   41:
+   42:	  0020	74 2E			MOV		A,#'.'
+   43:	  0022	11 4C			ACALL	LCD_WRITE_DATA
+
+ASEM-51 V1.3                                         Copyright (c) 2002 by W.W. Heinz                                         PAGE 2
+
+
+
+ Line  I  Addr  Code            Source
+
+   44:	  0024	11 59			ACALL	_LCD_WAIT_WHILE_BUSY
+   45:
+   46:	  0026	74 2E			MOV		A,#'.'
+   47:	  0028	11 4C			ACALL	LCD_WRITE_DATA
+   48:	  002A	11 59			ACALL	_LCD_WAIT_WHILE_BUSY
+   49:				;-----------------------------------
+   50:	  002C			MLOOP:
+   51:
+   52:	  002C	80 FE			SJMP MLOOP
+   53:
+   54:
+   55:
+   56:				;-------------------------------------
+   57:				;	LCD INTERFACING CODE IN 8BIT MODE
+   58:				;-------------------------------------
+   59:	  002E			LCD_INIT:
+   60:	  002E	74 38			MOV		A,#38H		;THIS COMMAND TELLS LCD TO INITIALIZE 5x7 2LINE
+   61:	  0030	11 40			ACALL 	LCD_WRITE_CMD
+   62:	  0032	11 61			ACALL 	DELAY1
+   63:	  0034	74 0F			MOV		A,#0FH		;DISPLAY ON, CURSOR ON
+   64:	  0036	11 40			ACALL 	LCD_WRITE_CMD
+   65:	  0038	11 61			ACALL 	DELAY1
+   66:	  003A	22			RET
+   67:
+   68:	  003B			LCD_CLR:
+   69:						;CLEAR ALL CHARACTERS FROM LCD DISPLAY
+   70:	  003B	74 00				MOV		A,#0H
+   71:	  003D	11 4C				ACALL 	LCD_WRITE_DATA
+   72:	  003F	22				RET
+   73:
+   74:	  0040			LCD_WRITE_CMD:
+   75:					;THIS FUNCTION WILL PUT COMMAND
+   76:					;INTO LCD's COMMAND REGISTER
+   77:	  0040	F5 80			MOV		LCD_DATA_PORT,A
+   78:	  0042	C2 A0			CLR		RS
+   79:	  0044	D2 A1			SETB	EN
+   80:	  0046	00			NOP
+   81:	  0047	00			NOP
+   82:	  0048	00			NOP
+   83:	  0049	C2 A1			CLR		EN
+   84:	  004B	22			RET
+   85:
+   86:	  004C			LCD_WRITE_DATA:
+   87:					;THIS FUNCTION WILL DISPLAY
+   88:					;DATA ONTO LCD
+   89:	  004C	F5 80			MOV		LCD_DATA_PORT,A
+   90:	  004E	D2 A0			SETB	RS
+   91:	  0050	D2 A1			SETB	EN
+   92:	  0052	00			NOP
+   93:	  0053	00			NOP
+   94:	  0054	00			NOP
+   95:	  0055	00			NOP
+   96:	  0056	C2 A1			CLR		EN
+   97:	  0058	22			RET
+   98:
+   99:				;===================================
+
+ASEM-51 V1.3                                         Copyright (c) 2002 by W.W. Heinz                                         PAGE 3
+
+
+
+ Line  I  Addr  Code            Source
+
+  100:
+  101:	  0059			_LCD_WAIT_WHILE_BUSY:
+  102:	  0059	90 00 82		MOV DPTR,#_LCDRC
+  103:	  005C	E0			MOVX A,@DPTR
+  104:	  005D	20 E7 F9		JB ACC.7, _LCD_WAIT_WHILE_BUSY
+  105:	  0060			_LCD_WAIT_WHILE_BUSY_END:
+  106:	  0060	22			RET
+  107:
+  108:	  0061			DELAY1:
+  109:	  0061	7E FF			MOV		R6,#255
+  110:	  0063			D1L1:
+  111:	  0063	7F FF			MOV		R7,#255
+  112:	  0065	DF FE			DJNZ	R7,$
+  113:	  0067	DE FA			DJNZ 	R6,D1L1
+  114:	  0069	22			RET
+  115:
+  116:				;===================================
+  117:				END
+
+
+
+
+
+                     register banks used:  ---
+
+                     no errors
+
+
+
+
+ASEM-51 V1.3                                         Copyright (c) 2002 by W.W. Heinz                                         PAGE 4
+
+
+
+
+
+	       L I S T   O F   S Y M B O L S
+	       =============================
+
+
+SYMBOL				  TYPE     VALUE	LINE
+------------------------------------------------------------
+??ASEM_51			  NUMBER    8051
+??VERSION			  NUMBER    0130
+AC				  BIT	      D6
+ACC				  DATA	      E0
+B				  DATA	      F0
+CY				  BIT	      D7
+D1L1				  CODE	    0063	 110
+DELAY1				  CODE	    0061	 108
+DPH				  DATA	      83
+DPL				  DATA	      82
+EA				  BIT	      AF
+EN				  BIT	      A1	   9
+ES				  BIT	      AC
+ET0				  BIT	      A9
+ET1				  BIT	      AB
+EX0				  BIT	      A8
+EX1				  BIT	      AA
+EXTI0				  CODE	    0003
+EXTI1				  CODE	    0013
+F0				  BIT	      D5
+IE				  DATA	      A8
+IE0				  BIT	      89
+IE1				  BIT	      8B
+INT0				  BIT	      B2
+INT1				  BIT	      B3
+IP				  DATA	      B8
+IT0				  BIT	      88
+IT1				  BIT	      8A
+LCD_CLR				  CODE	    003B	  68
+LCD_DATA_PORT			  NUMBER    0080	   7
+LCD_INIT			  CODE	    002E	  59
+LCD_WRITE_CMD			  CODE	    0040	  74
+LCD_WRITE_DATA			  CODE	    004C	  86
+MAIN				  CODE	    0000	  16
+MLOOP				  CODE	    002C	  50
+OV				  BIT	      D2
+P				  BIT	      D0
+P0				  DATA	      80
+P1				  DATA	      90
+P2				  DATA	      A0
+P3				  DATA	      B0
+PCON				  DATA	      87
+PS				  BIT	      BC
+PSW				  DATA	      D0
+PT0				  BIT	      B9
+PT1				  BIT	      BB
+PX0				  BIT	      B8
+PX1				  BIT	      BA
+RB8				  BIT	      9A
+RD				  BIT	      B7
+
+ASEM-51 V1.3                                         Copyright (c) 2002 by W.W. Heinz                                         PAGE 5
+
+
+
+SYMBOL				  TYPE     VALUE	LINE
+------------------------------------------------------------
+REN				  BIT	      9C
+RESET				  CODE	    0000
+RI				  BIT	      98
+RS				  BIT	      A0	   8
+RS0				  BIT	      D3
+RS1				  BIT	      D4
+RXD				  BIT	      B0
+SBUF				  DATA	      99
+SCON				  DATA	      98
+SINT				  CODE	    0023
+SM0				  BIT	      9F
+SM1				  BIT	      9E
+SM2				  BIT	      9D
+SP				  DATA	      81
+T0				  BIT	      B4
+T1				  BIT	      B5
+TB8				  BIT	      9B
+TCON				  DATA	      88
+TF0				  BIT	      8D
+TF1				  BIT	      8F
+TH0				  DATA	      8C
+TH1				  DATA	      8D
+TI				  BIT	      99
+TIMER0				  CODE	    000B
+TIMER1				  CODE	    001B
+TL0				  DATA	      8A
+TL1				  DATA	      8B
+TMOD				  DATA	      89
+TR0				  BIT	      8C
+TR1				  BIT	      8E
+TXD				  BIT	      B1
+WR				  BIT	      B6
+_LCDRC				  DATA	      82	  10
+_LCD_WAIT_WHILE_BUSY		  CODE	    0059	 101
+_LCD_WAIT_WHILE_BUSY_END	  CODE	    0060	 105

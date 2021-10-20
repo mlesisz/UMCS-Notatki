@@ -1,0 +1,246 @@
+
+ASEM-51 V1.3                                         Copyright (c) 2002 by W.W. Heinz                                         PAGE 1
+
+
+
+
+
+       MCS-51 Family Macro Assembler   A S E M - 5 1   V 1.3
+       =====================================================
+
+
+
+	Source File:	Zadanie10.asm
+	Object File:	Zadanie10.hex
+	List File:	Zadanie10.lst
+
+
+
+ Line  I  Addr  Code            Source
+
+    1:		N	 2F	_LED	DATA 02Fh
+    2:
+    3:		N	 30	_WSK1	DATA	030h
+    4:		N	 31	_WSK2	DATA	031h
+    5:		N	 32	_WSK3	DATA	032h
+    6:		N	 33	_WSK4	DATA	033h
+    7:		N	 34	_WSK5	DATA	034h
+    8:		N	 35	_WSK6	DATA	035h
+    9:
+   10:		N	 36	_WSK_INDEKS	DATA	036h
+   11:
+   12:		N      FF30	_CSDS	EQU 0FF30h
+   13:		N      FF38	_CSDB	EQU 0FF38h
+   14:
+   15:
+   16:		N      0000		ORG 0000h
+   17:	  0000			_RESET:
+   18:	  0000	02 01 00		LJMP _INIT
+   19:
+   20:
+   21:		N      0100		ORG 0100h
+   22:	  0100			_INIT:
+   23:	  0100	12 01 33		CALL _7SEG_INIT
+   24:	  0103	12 01 0D		CALL _7SEG_REF
+   25:
+   26:
+   27:
+   28:
+   29:	  0106			_LOOP:
+   30:	  0106	00			NOP
+   31:	  0107	12 01 0D		CALL _7SEG_REF
+   32:	  010A	02 01 06		LJMP	_LOOP
+   33:
+   34:	  010D			_7SEG_REF:
+   35:	  010D	D2 96			SETB P1.6
+   36:
+   37:	  010F	74 80			MOV A,#10000000b
+   38:	  0111	AF 36			MOV R7,_WSK_INDEKS
+   39:
+   40:	  0113			_INDEKSUJ:
+   41:	  0113	DF 03			DJNZ R7,_INDEKSUJ_CD
+   42:	  0115	02 01 1B		JMP _INDEKSUJ_END
+   43:
+
+ASEM-51 V1.3                                         Copyright (c) 2002 by W.W. Heinz                                         PAGE 2
+
+
+
+ Line  I  Addr  Code            Source
+
+   44:	  0118			_INDEKSUJ_CD:
+   45:	  0118	23			RL A
+   46:	  0119	80 F8			JMP _INDEKSUJ
+   47:	  011B			_INDEKSUJ_END:
+   48:
+   49:	  011B	90 FF 30		MOV DPTR,#_CSDS
+   50:	  011E	F0			MOVX	@DPTR,A
+   51:
+   52:	  011F	74 2F			MOV A,#_LED
+   53:	  0121	25 36			ADD A,_WSK_INDEKS
+   54:	  0123	14			DEC A
+   55:
+   56:	  0124	F8			MOV R0,A
+   57:
+   58:	  0125	E6			MOV A,@R0
+   59:	  0126	90 FF 38		MOV DPTR, #_CSDB
+   60:	  0129	F0			MOVX @DPTR,A
+   61:
+   62:
+   63:	  012A	C2 96			CLR P1.6
+   64:
+   65:	  012C	D5 36 03		DJNZ _WSK_INDEKS,_7SEG_REF_END
+   66:	  012F	75 36 07		MOV _WSK_INDEKS,#7d
+   67:
+   68:	  0132			_7SEG_REF_END:
+   69:	  0132	22			RET
+   70:
+   71:	  0133			_7SEG_INIT:
+   72:	  0133	D2 96			SETB P1.6
+   73:
+   74:	  0135	75 36 07		MOV _WSK_INDEKS,#7d
+   75:
+   76:	  0138	75 2F 10		MOV _LED, #00010000b
+   77:	  013B	75 30 06		MOV _WSK1,#00000110b
+   78:	  013E	75 31 5B		MOV _WSK2,#01011011b
+   79:	  0141	75 32 4F		MOV _WSK3,#01001111b
+   80:	  0144	75 33 66		MOV _WSK4,#01100110b
+   81:	  0147	75 34 6D		MOV _WSK5,#01101101b
+   82:	  014A	75 35 7D		MOV _WSK6,#01111101b
+   83:
+   84:					;MOV A,#00000001b
+   85:					;MOV DPTR,#_CSDS
+   86:					;MOVX	@DPTR,A
+   87:
+   88:	  014D	C2 96			CLR P1.6
+   89:
+   90:	  014F	22			RET
+   91:
+   92:
+   93:				END
+
+
+
+
+
+                     register banks used:  ---
+
+ASEM-51 V1.3                                         Copyright (c) 2002 by W.W. Heinz                                         PAGE 3
+
+
+
+
+                     no errors
+
+
+
+
+ASEM-51 V1.3                                         Copyright (c) 2002 by W.W. Heinz                                         PAGE 4
+
+
+
+
+
+	       L I S T   O F   S Y M B O L S
+	       =============================
+
+
+SYMBOL				  TYPE     VALUE	LINE
+------------------------------------------------------------
+??ASEM_51			  NUMBER    8051
+??VERSION			  NUMBER    0130
+AC				  BIT	      D6
+ACC				  DATA	      E0
+B				  DATA	      F0
+CY				  BIT	      D7
+DPH				  DATA	      83
+DPL				  DATA	      82
+EA				  BIT	      AF
+ES				  BIT	      AC
+ET0				  BIT	      A9
+ET1				  BIT	      AB
+EX0				  BIT	      A8
+EX1				  BIT	      AA
+EXTI0				  CODE	    0003
+EXTI1				  CODE	    0013
+F0				  BIT	      D5
+IE				  DATA	      A8
+IE0				  BIT	      89
+IE1				  BIT	      8B
+INT0				  BIT	      B2
+INT1				  BIT	      B3
+IP				  DATA	      B8
+IT0				  BIT	      88
+IT1				  BIT	      8A
+OV				  BIT	      D2
+P				  BIT	      D0
+P0				  DATA	      80
+P1				  DATA	      90
+P2				  DATA	      A0
+P3				  DATA	      B0
+PCON				  DATA	      87
+PS				  BIT	      BC
+PSW				  DATA	      D0
+PT0				  BIT	      B9
+PT1				  BIT	      BB
+PX0				  BIT	      B8
+PX1				  BIT	      BA
+RB8				  BIT	      9A
+RD				  BIT	      B7
+REN				  BIT	      9C
+RESET				  CODE	    0000
+RI				  BIT	      98
+RS0				  BIT	      D3
+RS1				  BIT	      D4
+RXD				  BIT	      B0
+SBUF				  DATA	      99
+SCON				  DATA	      98
+SINT				  CODE	    0023
+SM0				  BIT	      9F
+
+ASEM-51 V1.3                                         Copyright (c) 2002 by W.W. Heinz                                         PAGE 5
+
+
+
+SYMBOL				  TYPE     VALUE	LINE
+------------------------------------------------------------
+SM1				  BIT	      9E
+SM2				  BIT	      9D
+SP				  DATA	      81
+T0				  BIT	      B4
+T1				  BIT	      B5
+TB8				  BIT	      9B
+TCON				  DATA	      88
+TF0				  BIT	      8D
+TF1				  BIT	      8F
+TH0				  DATA	      8C
+TH1				  DATA	      8D
+TI				  BIT	      99
+TIMER0				  CODE	    000B
+TIMER1				  CODE	    001B
+TL0				  DATA	      8A
+TL1				  DATA	      8B
+TMOD				  DATA	      89
+TR0				  BIT	      8C
+TR1				  BIT	      8E
+TXD				  BIT	      B1
+WR				  BIT	      B6
+_7SEG_INIT			  CODE	    0133	  71
+_7SEG_REF			  CODE	    010D	  34
+_7SEG_REF_END			  CODE	    0132	  68
+_CSDB				  NUMBER    FF38	  13
+_CSDS				  NUMBER    FF30	  12
+_INDEKSUJ			  CODE	    0113	  40
+_INDEKSUJ_CD			  CODE	    0118	  44
+_INDEKSUJ_END			  CODE	    011B	  47
+_INIT				  CODE	    0100	  22
+_LED				  DATA	      2F	   1
+_LOOP				  CODE	    0106	  29
+_RESET				  CODE	    0000	  17
+_WSK1				  DATA	      30	   3
+_WSK2				  DATA	      31	   4
+_WSK3				  DATA	      32	   5
+_WSK4				  DATA	      33	   6
+_WSK5				  DATA	      34	   7
+_WSK6				  DATA	      35	   8
+_WSK_INDEKS			  DATA	      36	  10

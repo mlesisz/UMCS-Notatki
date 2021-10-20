@@ -1,0 +1,6 @@
+	ORG 0000H
+	CLR P1.7
+	_LOOP:
+	NOP
+	LJMP _LOOP
+END

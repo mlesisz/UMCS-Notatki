@@ -1,0 +1,1 @@
+asemw zad2.asm > Log.txt

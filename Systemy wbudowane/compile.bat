@@ -1,0 +1,1 @@
+asemw.exe main.asm >> log.txt

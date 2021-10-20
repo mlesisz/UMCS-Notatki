@@ -1,0 +1,37 @@
+	ORG 0000h
+_RESET:
+	LJMP _INIT
+
+	ORG 0100h
+_INIT:
+	NOP
+	MOV 030h, #50d
+	MOV 031h, #50d
+	CLR C
+	MOV a, 030h
+	SUBB a, 031h
+
+	JNZ _ELSE
+
+_IF:
+	CALL _TEST_LED_ON
+	LJMP _FI
+
+_ELSE:
+	CALL _BAZA_ON
+_FI:
+
+_LOOP:
+	NOP
+	LJMP _LOOP
+
+_BAZA_ON:
+	CLR P1.5
+	RET
+
+_TEST_LED_ON:
+	CLR P1.7
+	RET
+
+
+END
